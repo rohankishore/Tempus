@@ -157,7 +157,7 @@ class Window(FramelessWindow):
     def initWindow(self):
         self.resize(1000, 600)
         self.setWindowIcon(QIcon('resources/icons/icon.png'))
-        self.setWindowTitle('Youtility')
+        self.setWindowTitle(APP_NAME)
         self.setQss()
 
     def addSubInterface(self, interface, icon, text: str, position=NavigationItemPosition.TOP, selectedIcon=None):
