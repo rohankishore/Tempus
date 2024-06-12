@@ -226,7 +226,7 @@ class Window(FramelessWindow):
         self.hBoxLayout.setStretchFactor(self.stackWidget, 1)
 
     def initNavigation(self):
-        self.addSubInterface(self.videoInterface, FIF.CALENDAR, 'Home', selectedIcon=FIF.CALENDAR)
+        self.addSubInterface(self.videoInterface, FIF.CALENDAR, 'Calendar', selectedIcon=FIF.CALENDAR)
         # self.addSubInterface(self.playlistInterface, FIF.FOLDER, 'Playlist', selectedIcon=FIF.FOLDER)
         # self.addSubInterface(self.captionInterface, QIcon("resources/icons/captions.svg"), 'Captions',
         # selectedIcon=QIcon(

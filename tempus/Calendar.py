@@ -4,7 +4,7 @@ import requests
 from PyQt6.QtCore import QDate, QSize, Qt
 from PyQt6.QtGui import QFont
 from PyQt6.QtWidgets import (QWidget, QCalendarWidget,
-                             QLabel, QVBoxLayout, QDialog, QSpacerItem)
+                             QLabel, QVBoxLayout, QDialog, QSpacerItem, QStyleOptionViewItem, QStyle)
 
 with open("resources/misc/config.json") as config_file:
     _config = json.load(config_file)
@@ -12,6 +12,9 @@ with open("resources/misc/config.json") as config_file:
 API_KEY = 'kFMc4CuIbuiw79o9q0dYwUuKAD1lhdbk'
 COUNTRY = 'IN'
 
+
+# API_KEY = _config["api-key"]
+# COUNTRY = _config['country']
 
 class FestivalDialog(QDialog):
 
@@ -49,36 +52,30 @@ class FestivalDialog(QDialog):
         self.setGeometry(400, 400, 300, 150)
 
 
-class Calendar(QWidget):
-
+class Calendar(QCalendarWidget):
     def __init__(self):
         super().__init__()
+        self.setGridVisible(True)
+        self.clicked[QDate].connect(self.showDate)
+        self.hovered_date = None
 
-        vbox = QVBoxLayout(self)
-        self.setObjectName("Calendar")
-        cal = QCalendarWidget(self)
-        cal.setGridVisible(True)
-        cal.clicked[QDate].connect(self.showDate)
+    def event(self, event):
+        if event.type() == event.Type.MouseMove:
+            pos = event.pos()
+            date = self.dateAt(pos)
+            if date != self.hovered_date:
+                self.hovered_date = date
+                self.update()
+        return super().event(event)
 
-        vbox.addWidget(cal)
-
-        self.lbl = QLabel(self)
-        date = cal.selectedDate()
-        self.lbl.setText(date.toString())
-
-        vbox.addWidget(self.lbl)
-
-        self.setLayout(vbox)
-
-        self.setGeometry(300, 300, 350, 300)
-        self.setWindowTitle('Tempus')
-        self.show()
+    def paintCell(self, painter, rect, date):
+        super().paintCell(painter, rect, date)
+        if date == self.hovered_date:
+            painter.fillRect(rect, Qt.GlobalColor.lightGray)
 
     def showDate(self, date):
-        self.lbl.setText(date.toString())
         date_str = date.toString("yyyy-MM-dd")
         festivals = self.getFestivals(date_str)
-
         dialog = FestivalDialog(date, festivals)
         dialog.exec()
 
@@ -97,3 +94,20 @@ class Calendar(QWidget):
             return data['response']['holidays']
         else:
             return []
+
+
+class CalendarWidget(QWidget):
+    def __init__(self):
+        super().__init__()
+        vbox = QVBoxLayout(self)
+        self.setObjectName("Calendar")
+        self.calendar = Calendar()
+        vbox.addWidget(self.calendar)
+        self.lbl = QLabel(self)
+        date = self.calendar.selectedDate()
+        self.lbl.setText(date.toString())
+        vbox.addWidget(self.lbl)
+        self.setLayout(vbox)
+        self.setGeometry(300, 300, 350, 300)
+        self.setWindowTitle('Tempus')
+        self.show()
