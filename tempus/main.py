@@ -1,10 +1,12 @@
 # coding:utf-8
 import sys
 
+import pycountry
 import qdarktheme
 from PyQt6.QtCore import Qt, pyqtSignal, QEasingCurve, QUrl
-from PyQt6.QtGui import QIcon, QDesktopServices
-from PyQt6.QtWidgets import QApplication, QLabel, QHBoxLayout, QVBoxLayout, QFrame
+from PyQt6.QtGui import QIcon, QDesktopServices, QPixmap
+from PyQt6.QtWidgets import QApplication, QLabel, QHBoxLayout, QVBoxLayout, QFrame, QDialog, QComboBox, QLineEdit, \
+    QPushButton, QMainWindow
 from qfluentwidgets import FluentIcon as FIF
 from qfluentwidgets import (NavigationBar, NavigationItemPosition, MessageBox,
                             isDarkTheme, setTheme, Theme,
@@ -14,6 +16,90 @@ from qframelesswindow import FramelessWindow, TitleBar
 from Calendar import Calendar
 
 APP_NAME = "Tempus"
+
+import json
+
+with open("resources/misc/config.json") as config_file:
+    _config = json.load(config_file)
+
+
+class Onboarding(QDialog):
+    def __init__(self):
+        super().__init__()
+
+        self.initUI()
+
+    def initUI(self):
+        self.setWindowTitle('Onboarding')
+        self.setGeometry(500, 200, 1100, 500)
+
+        # Create main layout
+        main_layout = QHBoxLayout(self)
+
+        # Left layout
+        self.left_layout = QVBoxLayout()
+        self.left_layout.setContentsMargins(0, 0, 0, 0)
+
+        label1 = QLabel("Country Code")
+        self.country_edit = QComboBox(self)
+        self.country_edit.setPlaceholderText("Enter your country code")
+        country_codes = self.fetch_country_codes()
+        self.country_edit.addItems(country_codes)
+
+        label2 = QLabel("Calendarific API Key (To view any festivals in a given date)")
+        self.api_key_edit = QLineEdit(self)
+        self.api_key_edit.setPlaceholderText("Enter your Calendarific API key")
+
+        self.submit = QPushButton("Lets Go! -->")
+        self.submit.clicked.connect(self.submit_details)
+
+        self.left_layout.addWidget(self.country_edit)
+        self.left_layout.addWidget(self.api_key_edit)
+        self.left_layout.addWidget(self.submit, alignment=Qt.AlignmentFlag.AlignBottom)
+
+        # Right layout
+        self.right_layout = QHBoxLayout()
+        self.right_layout.setContentsMargins(10, 10, 10, 10)
+
+        # Resize the image to make it smaller
+        self.right_img = QPixmap("resources/icons/Designer.png").scaled(706, 500, Qt.AspectRatioMode.IgnoreAspectRatio)
+        self.right_label = QLabel()
+        self.right_label.setPixmap(self.right_img)
+
+        self.right_layout.addWidget(self.right_label, alignment=Qt.AlignmentFlag.AlignTop)
+
+        # Add left and right layouts to main layout
+        main_layout.addLayout(self.left_layout)
+        main_layout.addLayout(self.right_layout)
+
+        # Set the dialog layout
+        self.setLayout(main_layout)
+
+    def fetch_country_codes(self):
+        countries = list(pycountry.countries)
+        country_codes = [country.alpha_2 for country in countries]
+        return country_codes
+
+    def submit_details(self):
+        c_code = self.country_edit.currentText()
+        api_Key = self.api_key_edit.text()
+
+        _config["api-key"] = api_Key
+        _config["country"] = c_code
+        _config["start"] = "True"
+
+        with open("resources/misc/config.json", "w") as config_file:
+            json.dump(_config, config_file)
+
+        self.accept()
+        self.goto_app()
+
+    def goto_app(self):
+        self.accept()
+        global main_window
+        main_window = Window()
+        main_window.start()
+        main_window.show()
 
 
 class StackedWidget(QFrame):
@@ -107,24 +193,29 @@ class Window(FramelessWindow):
         setTheme(Theme.DARK)
 
         # change the theme color
-        #setThemeColor(theme_color)
+        # setThemeColor(theme_color)
 
         self.hBoxLayout = QHBoxLayout(self)
         self.navigationBar = NavigationBar(self)
         self.stackWidget = StackedWidget(self)
 
         # create sub interface
+        self.videoInterface = ""
+        # self.playlistInterface = playlist.YoutubePlaylist()
+        # self.captionInterface = get_captions.CaptionWidget()
+        # self.settingsInterface = settings.SettingsPage()
+
+        if _config.get("start") == "True":
+            self.start()
+        else:
+            qdarktheme.setup_theme("dark")
+            onboarding = Onboarding()
+            onboarding.exec()
+
+    def start(self):
         self.videoInterface = Calendar()
-        #self.playlistInterface = playlist.YoutubePlaylist()
-        #self.captionInterface = get_captions.CaptionWidget()
-        #self.settingsInterface = settings.SettingsPage()
-
-        # initialize layout
         self.initLayout()
-
-        # add items to navigation interface
         self.initNavigation()
-
         self.initWindow()
 
     def initLayout(self):
@@ -136,12 +227,12 @@ class Window(FramelessWindow):
 
     def initNavigation(self):
         self.addSubInterface(self.videoInterface, FIF.CALENDAR, 'Home', selectedIcon=FIF.CALENDAR)
-        #self.addSubInterface(self.playlistInterface, FIF.FOLDER, 'Playlist', selectedIcon=FIF.FOLDER)
-        #self.addSubInterface(self.captionInterface, QIcon("resources/icons/captions.svg"), 'Captions',
-                             #selectedIcon=QIcon(
-                                 #"resources/icons/captions.svg"))
-        #self.addSubInterface(self.settingsInterface, FIF.SETTING, 'Settings', NavigationItemPosition.BOTTOM,
-                             #FIF.SETTING)
+        # self.addSubInterface(self.playlistInterface, FIF.FOLDER, 'Playlist', selectedIcon=FIF.FOLDER)
+        # self.addSubInterface(self.captionInterface, QIcon("resources/icons/captions.svg"), 'Captions',
+        # selectedIcon=QIcon(
+        # "resources/icons/captions.svg"))
+        # self.addSubInterface(self.settingsInterface, FIF.SETTING, 'Settings', NavigationItemPosition.BOTTOM,
+        # FIF.SETTING)
         self.navigationBar.addItem(
             routeKey='About',
             icon=FIF.HELP,
@@ -198,7 +289,7 @@ class Window(FramelessWindow):
         w.cancelButton.setText('Return')
 
         if w.exec():
-            QDesktopServices.openUrl(QUrl("https://github.com/rohankishore/Youtility"))
+            QDesktopServices.openUrl(QUrl("https://github.com/rohankishore/Tempus"))
 
 
 if __name__ == '__main__':

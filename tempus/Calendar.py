@@ -1,24 +1,16 @@
-#!/usr/bin/python
+import json
 
-"""
-ZetCode PyQt6 tutorial
-
-This example shows a QCalendarWidget widget with a popup dialog displaying festival information fetched from an API.
-
-Author: Jan Bodnar
-Modified by: Your Name
-Website: zetcode.com
-"""
-
-from PyQt6.QtWidgets import (QWidget, QCalendarWidget,
-                             QLabel, QApplication, QVBoxLayout, QDialog)
-from PyQt6.QtCore import QDate
-import sys
 import requests
+from PyQt6.QtCore import QDate, QSize, Qt
+from PyQt6.QtGui import QFont
+from PyQt6.QtWidgets import (QWidget, QCalendarWidget,
+                             QLabel, QVBoxLayout, QDialog, QSpacerItem)
 
+with open("resources/misc/config.json") as config_file:
+    _config = json.load(config_file)
 
-API_KEY = 'kFMc4CuIbuiw79o9q0dYwUuKAD1lhdbk'  # Replace with your Calendarific API key
-COUNTRY = 'US'  # Set your country code
+API_KEY = 'kFMc4CuIbuiw79o9q0dYwUuKAD1lhdbk'
+COUNTRY = 'IN'
 
 
 class FestivalDialog(QDialog):
@@ -27,23 +19,33 @@ class FestivalDialog(QDialog):
         super().__init__()
         self.initUI(date, festivals)
         self.setObjectName("Popup")
+        self.setMinimumSize(QSize(500, 400))
+
+    # self.setMaximumSize(QSize(600, 500))
 
     def initUI(self, date, festivals):
         vbox = QVBoxLayout(self)
-
+        vbox.addSpacing(40)
+        # vbox.addStretch()
+        spacer = QSpacerItem(0, 10)
         date_label = QLabel(f"Date: {date.toString()}", self)
-        vbox.addWidget(date_label)
+        date_label.setFont(QFont("Arial", 14, QFont.Weight.Bold))
+        vbox.addWidget(date_label, alignment=Qt.AlignmentFlag.AlignTop)
+        # vbox.addSpacerItem(spacer)
 
         if festivals:
             for festival in festivals:
-                festival_label = QLabel(f"Festival: {festival['name']} - {festival['description']}", self)
+                festival_label = QLabel(f"<a href='#'>{festival['name']}</a> - {festival['description']}")
+                festival_label.setOpenExternalLinks(True)
+                festival_label.setFont(QFont("Consolas", 11, QFont.Weight.Bold))
+                festival_label.setWordWrap(True)
                 vbox.addWidget(festival_label)
         else:
             festival_label = QLabel("No festivals", self)
             vbox.addWidget(festival_label)
 
         self.setLayout(vbox)
-        self.setWindowTitle("Festival Information")
+        self.setWindowTitle((date.toString()))
         self.setGeometry(400, 400, 300, 150)
 
 
