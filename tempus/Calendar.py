@@ -9,12 +9,12 @@ from PyQt6.QtWidgets import (QWidget, QCalendarWidget,
 with open("resources/misc/config.json") as config_file:
     _config = json.load(config_file)
 
-API_KEY = 'kFMc4CuIbuiw79o9q0dYwUuKAD1lhdbk'
-COUNTRY = 'IN'
+# API_KEY = 'kFMc4CuIbuiw79o9q0dYwUuKAD1lhdbk'
+# COUNTRY = 'IN'
 
 
-# API_KEY = _config["api-key"]
-# COUNTRY = _config['country']
+API_KEY = _config["api-key"]
+COUNTRY = _config['country']
 
 class FestivalDialog(QDialog):
 

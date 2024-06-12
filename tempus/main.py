@@ -189,11 +189,7 @@ class Window(FramelessWindow):
         super().__init__()
         self.setTitleBar(CustomTitleBar(self))
 
-        # use dark theme mode
         setTheme(Theme.DARK)
-
-        # change the theme color
-        # setThemeColor(theme_color)
 
         self.hBoxLayout = QHBoxLayout(self)
         self.navigationBar = NavigationBar(self)
@@ -201,9 +197,6 @@ class Window(FramelessWindow):
 
         # create sub interface
         self.videoInterface = ""
-        # self.playlistInterface = playlist.YoutubePlaylist()
-        # self.captionInterface = get_captions.CaptionWidget()
-        # self.settingsInterface = settings.SettingsPage()
 
         if _config.get("start") == "True":
             self.start()
@@ -227,12 +220,6 @@ class Window(FramelessWindow):
 
     def initNavigation(self):
         self.addSubInterface(self.videoInterface, FIF.CALENDAR, 'Calendar', selectedIcon=FIF.CALENDAR)
-        # self.addSubInterface(self.playlistInterface, FIF.FOLDER, 'Playlist', selectedIcon=FIF.FOLDER)
-        # self.addSubInterface(self.captionInterface, QIcon("resources/icons/captions.svg"), 'Captions',
-        # selectedIcon=QIcon(
-        # "resources/icons/captions.svg"))
-        # self.addSubInterface(self.settingsInterface, FIF.SETTING, 'Settings', NavigationItemPosition.BOTTOM,
-        # FIF.SETTING)
         self.navigationBar.addItem(
             routeKey='About',
             icon=FIF.HELP,
