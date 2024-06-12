@@ -55,7 +55,7 @@ class Onboarding(QDialog):
         self.api_key_edit.setPlaceholderText("Enter your Calendarific API key (for Festivals data) (OPTIONAL)")
 
         self.dob = QLineEdit(self)
-        self.dob.setPlaceholderText("Enter your Date of Birth (DDMMYYYY) (OPTIONAL)")
+        self.dob.setPlaceholderText("Enter your Date of Birth (YYYY-MM-DD) (OPTIONAL)")
 
         self.submit = QPushButton("Lets Go! -->")
         self.submit.clicked.connect(self.submit_details)

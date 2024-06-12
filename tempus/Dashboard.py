@@ -1,4 +1,5 @@
 import datetime
+import json
 from xml import etree
 
 import requests
@@ -11,13 +12,23 @@ from qfluentwidgets import (CardWidget, setTheme, Theme, IconWidget, BodyLabel, 
                             VerticalSeparator, MSFluentWindow, NavigationItemPosition)
 # coding:utf-8
 import sys
+import Widgets
 from quote import quote
 import pycountry
 import qdarktheme
-from PyQt6.QtCore import Qt, pyqtSignal, QEasingCurve, QUrl, QPoint
+from PyQt6.QtCore import Qt, pyqtSignal, QEasingCurve, QUrl, QPoint, QSize
 from PyQt6.QtGui import QIcon, QDesktopServices, QPixmap
 from PyQt6.QtWidgets import QApplication, QLabel, QHBoxLayout, QVBoxLayout, QFrame, QDialog, QComboBox, QLineEdit, \
     QPushButton, QMainWindow, QWidget
+
+with open("resources/misc/config.json") as config_file:
+    _config = json.load(config_file)
+
+zodiac = _config["zodiac"]
+dob = _config["dob"]
+today = datetime.datetime.today()
+date_str = today.strftime("%Y-%m-%d") + " "
+day_of_week_str = today.strftime("%A")
 
 
 class Dashboard(QWidget):
@@ -26,65 +37,68 @@ class Dashboard(QWidget):
         self.vbox = QVBoxLayout(self)
         self.hbox_r1 = QHBoxLayout(self)
         self.setObjectName("Calendar")
+
+        self.gw = Widgets.DescriptionCard(date=date_str, dayofweek=day_of_week_str)
+        self.gw.setText("tee")
+        self.vbox.addWidget(self.gw)
+
         self.show()
 
-        today = datetime.datetime.today()
-        date_str = today.strftime("%Y-%m-%d") + " "
-        day_of_week_str = today.strftime("%A")
+        try:
+            dob = self.parse_date(_config["dob"])
+            delta = dob - today
+            days_rem_till_bday = delta.days
+        except Exception:
+            pass
 
-        self.addCard(f":/qfluentwidgets/images/logo.png",
-                     f"Today is {date_str}", day_of_week_str)
+        self.addCard_V(f":/qfluentwidgets/images/logo.png",
+                       f"Today is {date_str}", day_of_week_str)
 
+        self.addCard_V(f":/qfluentwidgets/images/logo.png",
+                       f"{days_rem_till_bday}", "days remaining till birthday")
 
-    def addCard(self, icon=None, title=None, content=None):
-        card = AppCard(icon, title, content, self)
+    def addCard_V(self, icon=None, title=None, content=None):
+        card = Widgets.AppCard(icon, title, content, self)
         self.vbox.addWidget(card, alignment=Qt.AlignmentFlag.AlignTop)
 
+    def addCard_H(self, icon=None, title=None, content=None):
+        card = Widgets.AppCard(icon, title, content, self)
+        self.hbox_r1.addWidget(card, alignment=Qt.AlignmentFlag.AlignTop)
 
-class AppCard(CardWidget):
-    def __init__(self, icon, title, content, parent=None):
-        super().__init__(parent)
-        self.iconWidget = IconWidget(icon)
-        self.titleLabel = BodyLabel(title, self)
-        self.contentLabel = CaptionLabel(content, self)
-        #self.openButton = PushButton('打开', self)
-        # self.moreButton = TransparentToolButton(FluentIcon.MORE, self)
+    def parse_date(self, date_str):
+        return datetime.datetime.strptime(date_str, '%Y-%m-%d')
 
-        self.hBoxLayout = QHBoxLayout(self)
-        self.vBoxLayout = QVBoxLayout()
+    def horoscope(self):
+        def get_horoscope(zodiac_sign: int, day: str):
+            if not "-" in day:
+                res = requests.get(
+                    f"https://www.horoscope.com/us/horoscopes/general/horoscope-general-daily-{day}.aspx?sign={zodiac_sign}")
+            else:
+                day = day.replace("-", "")
+                res = requests.get(
+                    f"https://www.horoscope.com/us/horoscopes/general/horoscope-archive.aspx?sign={zodiac_sign}&laDate={day}")
 
-        self.setFixedHeight(73)
-        self.iconWidget.setFixedSize(48, 48)
-        self.contentLabel.setTextColor("#606060", "#d2d2d2")
-        #self.openButton.setFixedWidth(120)
+            soup = BeautifulSoup(res.content, 'html.parser')
+            data = soup.find('div', attrs={'class': 'main-horoscope'})
+            return data.p.text
 
-        self.hBoxLayout.setContentsMargins(20, 11, 11, 11)
-        self.hBoxLayout.setSpacing(15)
-        self.hBoxLayout.addWidget(self.iconWidget)
+        zodiac_signs = {
+            "Aries": 1,
+            "Taurus": 2,
+            "Gemini": 3,
+            "Cancer": 4,
+            "Leo": 5,
+            "Virgo": 6,
+            "Libra": 7,
+            "Scorpio": 8,
+            "Sagittarius": 9,
+            "Capricorn": 10,
+            "Aquarius": 11,
+            "Pisces": 12
+        }
 
-        self.vBoxLayout.setContentsMargins(0, 0, 0, 0)
-        self.vBoxLayout.setSpacing(0)
-        self.vBoxLayout.addWidget(self.titleLabel, 0, Qt.AlignmentFlag.AlignVCenter)
-        self.vBoxLayout.addWidget(self.contentLabel, 0, Qt.AlignmentFlag.AlignVCenter)
-        self.vBoxLayout.setAlignment(Qt.AlignmentFlag.AlignVCenter)
-        self.hBoxLayout.addLayout(self.vBoxLayout)
-
-        self.hBoxLayout.addStretch(1)
-        # self.hBoxLayout.addWidget(self.openButton, 0, Qt.AlignmentFlag.AlignRight)
-        # self.hBoxLayout.addWidget(self.moreButton, 0, Qt.AlignmentFlag.AlignRight)
-
-        #self.moreButton.setFixedSize(32, 32)
-        #self.moreButton.clicked.connect(self.onMoreButtonClicked)
-
-    def onMoreButtonClicked(self):
-        menu = RoundMenu(parent=self)
-        menu.addAction(Action(FluentIcon.SHARE, '共享', self))
-        menu.addAction(Action(FluentIcon.CHAT, '写评论', self))
-        menu.addAction(Action(FluentIcon.PIN, '固定到任务栏', self))
-
-        #x = (self.moreButton.width() - menu.width()) // 2 + 10
-        #pos = self.moreButton.mapToGlobal(QPoint(x, self.moreButton.height()))
-        #menu.exec(pos)
+        zodiac_res = (get_horoscope(zodiac_signs[zodiac], "today"))
+        return zodiac_res
 
 
 if __name__ == "__main__":
