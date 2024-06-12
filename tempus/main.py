@@ -12,7 +12,7 @@ from qfluentwidgets import (NavigationBar, NavigationItemPosition, MessageBox,
                             isDarkTheme, setTheme, Theme,
                             PopUpAniStackedWidget)
 from qframelesswindow import FramelessWindow, TitleBar
-
+from Dashboard import Dashboard
 from Calendar import Calendar
 
 APP_NAME = "Tempus"
@@ -40,21 +40,30 @@ class Onboarding(QDialog):
         self.left_layout = QVBoxLayout()
         self.left_layout.setContentsMargins(0, 0, 0, 0)
 
-        label1 = QLabel("Country Code")
         self.country_edit = QComboBox(self)
-        self.country_edit.setPlaceholderText("Enter your country code")
+        self.country_edit.setPlaceholderText("Select your country code (for Festivals data) (OPTIONAL)")
         country_codes = self.fetch_country_codes()
         self.country_edit.addItems(country_codes)
 
-        label2 = QLabel("Calendarific API Key (To view any festivals in a given date)")
+        self.zodiac_sign = QComboBox(self)
+        self.zodiac_sign.setPlaceholderText("Select your Zodiac Sign (for Horoscopes)")
+        zodiacs_list = ["Aries", "Taurus", "Gemini", "Cancer", "Leo", "Virgo",
+             "Libra", "Scorpio", "Sagittarius", "Capricorn", "Aquarius", "Pisces"]
+        self.zodiac_sign.addItems(zodiacs_list)
+
         self.api_key_edit = QLineEdit(self)
-        self.api_key_edit.setPlaceholderText("Enter your Calendarific API key")
+        self.api_key_edit.setPlaceholderText("Enter your Calendarific API key (for Festivals data) (OPTIONAL)")
+
+        self.dob = QLineEdit(self)
+        self.dob.setPlaceholderText("Enter your Date of Birth (DDMMYYYY) (OPTIONAL)")
 
         self.submit = QPushButton("Lets Go! -->")
         self.submit.clicked.connect(self.submit_details)
 
+        self.left_layout.addWidget(self.dob)
         self.left_layout.addWidget(self.country_edit)
         self.left_layout.addWidget(self.api_key_edit)
+        self.left_layout.addWidget(self.zodiac_sign)
         self.left_layout.addWidget(self.submit, alignment=Qt.AlignmentFlag.AlignBottom)
 
         # Right layout
@@ -81,12 +90,11 @@ class Onboarding(QDialog):
         return country_codes
 
     def submit_details(self):
-        c_code = self.country_edit.currentText()
-        api_Key = self.api_key_edit.text()
-
-        _config["api-key"] = api_Key
-        _config["country"] = c_code
+        _config["api-key"] = self.api_key_edit.text()
+        _config["country"] = self.country_edit.currentText()
         _config["start"] = "True"
+        _config["zodiac"] = self.zodiac_sign.currentText()
+        _config["dob"] = self.dob.text()
 
         with open("resources/misc/config.json", "w") as config_file:
             json.dump(_config, config_file)
@@ -196,6 +204,7 @@ class Window(FramelessWindow):
         self.stackWidget = StackedWidget(self)
 
         # create sub interface
+        self.homeInterface = ""
         self.videoInterface = ""
 
         if _config.get("start") == "True":
@@ -206,6 +215,7 @@ class Window(FramelessWindow):
             onboarding.exec()
 
     def start(self):
+        self.homeInterface = Dashboard()
         self.videoInterface = Calendar()
         self.initLayout()
         self.initNavigation()
@@ -219,6 +229,7 @@ class Window(FramelessWindow):
         self.hBoxLayout.setStretchFactor(self.stackWidget, 1)
 
     def initNavigation(self):
+        self.addSubInterface(self.homeInterface, FIF.HOME, 'Dashboard', selectedIcon=FIF.HOME)
         self.addSubInterface(self.videoInterface, FIF.CALENDAR, 'Calendar', selectedIcon=FIF.CALENDAR)
         self.navigationBar.addItem(
             routeKey='About',

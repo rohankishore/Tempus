@@ -29,22 +29,26 @@ class FestivalDialog(QDialog):
     def initUI(self, date, festivals):
         vbox = QVBoxLayout(self)
         vbox.addSpacing(40)
-        # vbox.addStretch()
         spacer = QSpacerItem(0, 10)
         date_label = QLabel(f"Date: {date.toString()}", self)
         date_label.setFont(QFont("Arial", 14, QFont.Weight.Bold))
         vbox.addWidget(date_label, alignment=Qt.AlignmentFlag.AlignTop)
-        # vbox.addSpacerItem(spacer)
+
+        festival_label = QLabel("")
+        festival_label.setFont(QFont("Consolas", 11, QFont.Weight.Bold))
+        festival_label.setWordWrap(True)
+        festival_label.setOpenExternalLinks(True)
+
+        vbox.addWidget(festival_label, alignment=Qt.AlignmentFlag.AlignTop)
 
         if festivals:
             for festival in festivals:
-                festival_label = QLabel(f"<a href='#'>{festival['name']}</a> - {festival['description']}")
-                festival_label.setOpenExternalLinks(True)
-                festival_label.setFont(QFont("Consolas", 11, QFont.Weight.Bold))
-                festival_label.setWordWrap(True)
-                vbox.addWidget(festival_label)
+                text = f"<a href='#'>{festival['name']}</a> - {festival['description']}"
+                festival_label.setText(text)
         else:
-            festival_label = QLabel("No festivals", self)
+            festival_label = QLabel("No festivals found. This could be because you haven't entered Calendarific API Key and Country."
+                                    "You can enter it in Settings.", self)
+            festival_label.setWordWrap(True)
             vbox.addWidget(festival_label)
 
         self.setLayout(vbox)
