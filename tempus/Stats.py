@@ -3,20 +3,16 @@ import json
 
 import requests
 from PyQt6.QtCore import Qt
-from PyQt6.QtGui import QIcon
-from PyQt6.QtWidgets import QHBoxLayout, QVBoxLayout, QWidget, QLabel
+from PyQt6.QtWidgets import QHBoxLayout, QVBoxLayout, QWidget
 from bs4 import BeautifulSoup
-from qfluentwidgets import (CardWidget, IconWidget, BodyLabel, CaptionLabel, TransparentToolButton, FluentIcon,
-                            RoundMenu, Action, ImageLabel, SimpleCardWidget,
-                            HeaderCardWidget, HyperlinkLabel, PrimaryPushButton, TitleLabel, PillPushButton, setFont,
-                            VerticalSeparator)
 
 import Widgets
+
+# coding:utf-8
 
 with open("resources/misc/config.json") as config_file:
     _config = json.load(config_file)
 
-user_name = _config["name"]
 zodiac = _config["zodiac"]
 dob = _config["dob"]
 today = datetime.datetime.today()
@@ -24,20 +20,16 @@ date_str = today.strftime("%Y-%m-%d") + " "
 day_of_week_str = today.strftime("%A")
 
 
-class Dashboard(QWidget):
+class Stats(QWidget):
     def __init__(self):
         super().__init__()
         self.vbox = QVBoxLayout(self)
         self.hbox_r1 = QHBoxLayout(self)
-        self.setObjectName("Home")
+        self.setObjectName("Stats")
 
-        self.header_card = Widgets.DateTitleCard(date=date_str, dayofweek=day_of_week_str)
-        if zodiac != "":
-            self.header_card.setText(("<b>Today's Horoscope</b>: &#13;&#10;" + "\n" + "\n" + self.horoscope()))
-        else:
-            self.header_card.setText(
-                "<b>Can't find horoscope info. Make sure you have entered your Zodiac sign and you have a valid internet connection</b>:")
-        self.vbox.addWidget(self.header_card)
+        self.gw = Widgets.DateTitleCard(date=date_str, dayofweek=day_of_week_str)
+        self.gw.setText(("<b>Today's Horoscope</b>: &#13;&#10;" + "\n" + "\n" + self.horoscope()))
+        self.vbox.addWidget(self.gw)
 
         self.show()
 
@@ -48,18 +40,11 @@ class Dashboard(QWidget):
         except Exception:
             pass
 
-        self.addCard_Appointments(QIcon("resources/icons/appointments.png"),
-                                  "Reminders for Today", "There are 3 reminders for today")
-
-        self.addCard_V(QIcon("resources/icons/cake.png"),
+        self.addCard_V(f":/qfluentwidgets/images/logo.png",
                        f"{days_rem_till_bday}", "days remaining till birthday")
 
     def addCard_V(self, icon=None, title=None, content=None):
         card = Widgets.AppCard(icon, title, content, self)
-        self.vbox.addWidget(card, alignment=Qt.AlignmentFlag.AlignTop)
-
-    def addCard_Appointments(self, icon=None, title=None, content=None):
-        card = Widgets.AppointmentsCard(icon, title, content, self)
         self.vbox.addWidget(card, alignment=Qt.AlignmentFlag.AlignTop)
 
     def addCard_H(self, icon=None, title=None, content=None):
@@ -83,6 +68,7 @@ class Dashboard(QWidget):
             data = soup.find('div', attrs={'class': 'main-horoscope'})
             return data.p.text
 
+        zodiac_res = ""
         zodiac_signs = {
             "Aries": 1,
             "Taurus": 2,
@@ -98,5 +84,8 @@ class Dashboard(QWidget):
             "Pisces": 12
         }
 
-        zodiac_res = (get_horoscope(zodiac_signs[zodiac], "today"))
+        try:
+            zodiac_res = (get_horoscope(zodiac_signs[zodiac], "today"))
+        except KeyError:
+            pass
         return zodiac_res

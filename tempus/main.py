@@ -6,18 +6,21 @@ import qdarktheme
 from PyQt6.QtCore import Qt, pyqtSignal, QEasingCurve, QUrl
 from PyQt6.QtGui import QIcon, QDesktopServices, QPixmap
 from PyQt6.QtWidgets import QApplication, QLabel, QHBoxLayout, QVBoxLayout, QFrame, QDialog, QComboBox, QLineEdit, \
-    QPushButton, QMainWindow
+    QPushButton
 from qfluentwidgets import FluentIcon as FIF
 from qfluentwidgets import (NavigationBar, NavigationItemPosition, MessageBox,
                             isDarkTheme, setTheme, Theme,
                             PopUpAniStackedWidget)
 from qframelesswindow import FramelessWindow, TitleBar
-from Dashboard import Dashboard
+
 from Calendar import Calendar
+from Dashboard import Dashboard
+#from Settings import SettingInterface
+from Stats import Stats
+import json
 
 APP_NAME = "Tempus"
 
-import json
 
 with open("resources/misc/config.json") as config_file:
     _config = json.load(config_file)
@@ -48,7 +51,7 @@ class Onboarding(QDialog):
         self.zodiac_sign = QComboBox(self)
         self.zodiac_sign.setPlaceholderText("Select your Zodiac Sign (for Horoscopes)")
         zodiacs_list = ["Aries", "Taurus", "Gemini", "Cancer", "Leo", "Virgo",
-             "Libra", "Scorpio", "Sagittarius", "Capricorn", "Aquarius", "Pisces"]
+                        "Libra", "Scorpio", "Sagittarius", "Capricorn", "Aquarius", "Pisces"]
         self.zodiac_sign.addItems(zodiacs_list)
 
         self.api_key_edit = QLineEdit(self)
@@ -203,9 +206,10 @@ class Window(FramelessWindow):
         self.navigationBar = NavigationBar(self)
         self.stackWidget = StackedWidget(self)
 
-        # create sub interface
-        self.homeInterface = ""
-        self.videoInterface = ""
+        self.homeInterface = None
+        self.videoInterface = None
+        self.statsInterface = None
+        self.settingsInterface = None
 
         if _config.get("start") == "True":
             self.start()
@@ -217,6 +221,8 @@ class Window(FramelessWindow):
     def start(self):
         self.homeInterface = Dashboard()
         self.videoInterface = Calendar()
+        self.statsInterface = Stats()
+        #self.settingsInterface = SettingInterface()
         self.initLayout()
         self.initNavigation()
         self.initWindow()
@@ -231,6 +237,9 @@ class Window(FramelessWindow):
     def initNavigation(self):
         self.addSubInterface(self.homeInterface, FIF.HOME, 'Dashboard', selectedIcon=FIF.HOME)
         self.addSubInterface(self.videoInterface, FIF.CALENDAR, 'Calendar', selectedIcon=FIF.CALENDAR)
+        self.addSubInterface(self.statsInterface, QIcon("resources/icons/stats.svg"), 'Stats',
+                             selectedIcon=QIcon("resources/icons/stats.svg"))
+
         self.navigationBar.addItem(
             routeKey='About',
             icon=FIF.HELP,
@@ -241,7 +250,7 @@ class Window(FramelessWindow):
         )
 
         self.stackWidget.currentChanged.connect(self.onCurrentInterfaceChanged)
-        self.navigationBar.setCurrentItem(self.videoInterface.objectName())
+        self.navigationBar.setCurrentItem(self.homeInterface.objectName())
 
     def initWindow(self):
         self.resize(1000, 600)
@@ -299,4 +308,5 @@ if __name__ == '__main__':
     w = Window()
     qdarktheme.setup_theme("dark")
     w.show()
+
     sys.exit(app.exec())

@@ -1,10 +1,16 @@
 import json
+import sqlite3
 
 import requests
 from PyQt6.QtCore import QDate, QSize, Qt
 from PyQt6.QtGui import QFont
 from PyQt6.QtWidgets import (QWidget, QCalendarWidget,
-                             QLabel, QVBoxLayout, QDialog, QSpacerItem, QStyleOptionViewItem, QStyle)
+                             QLabel, QVBoxLayout, QDialog, QSpacerItem, QStyleOptionViewItem, QStyle, QHBoxLayout)
+from qfluentwidgets import (CardWidget, IconWidget, BodyLabel, CaptionLabel, TransparentToolButton, FluentIcon,
+                            RoundMenu, Action, ImageLabel, SimpleCardWidget,
+                            HeaderCardWidget, HyperlinkLabel, PrimaryPushButton, TitleLabel, PillPushButton, PushButton,
+                            setFont,
+                            VerticalSeparator, ListWidget, ListView, ListItemDelegate)
 
 with open("resources/misc/config.json") as config_file:
     _config = json.load(config_file)
@@ -16,6 +22,32 @@ with open("resources/misc/config.json") as config_file:
 API_KEY = _config["api-key"]
 COUNTRY = _config['country']
 
+class TodoDialog(QDialog):
+    def __init__(self, date):
+        super().__init__()
+
+        self.conn = sqlite3.connect('resources/misc/todos.db')
+        self.cursor = self.conn.cursor()
+
+        # Create a table to store todos
+        self.cursor.execute('''
+                CREATE TABLE IF NOT EXISTS todos (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    date TEXT,
+                    time TEXT,
+                    description TEXT,
+                    status TEXT
+                )
+                ''')
+        self.conn.commit()
+
+    def add_todo(self, date, time, description, status):
+        self.cursor.execute('INSERT INTO todos (date, time, description, status) VALUES (?, ?, ?, ?)',
+                            (date, time, description, status))
+        self.conn.commit()
+
+
+
 class FestivalDialog(QDialog):
 
     def __init__(self, date, festivals):
@@ -23,12 +55,15 @@ class FestivalDialog(QDialog):
         self.initUI(date, festivals)
         self.setObjectName("Popup")
         self.setMinimumSize(QSize(500, 400))
-
     # self.setMaximumSize(QSize(600, 500))
 
     def initUI(self, date, festivals):
         vbox = QVBoxLayout(self)
         vbox.addSpacing(40)
+
+        hbox = QHBoxLayout(self)
+        vbox.addLayout(hbox)
+
         spacer = QSpacerItem(0, 10)
         date_label = QLabel(f"Date: {date.toString()}", self)
         date_label.setFont(QFont("Arial", 14, QFont.Weight.Bold))
@@ -39,15 +74,20 @@ class FestivalDialog(QDialog):
         festival_label.setWordWrap(True)
         festival_label.setOpenExternalLinks(True)
 
+        add_todo_button = PushButton()
+        add_todo_button.setText("Add TODOs / Reminders")
+
         vbox.addWidget(festival_label, alignment=Qt.AlignmentFlag.AlignTop)
+        hbox.addWidget(add_todo_button, alignment=Qt.AlignmentFlag.AlignTop)
 
         if festivals:
             for festival in festivals:
                 text = f"<a href='#'>{festival['name']}</a> - {festival['description']}"
                 festival_label.setText(text)
         else:
-            festival_label = QLabel("No festivals found. This could be because you haven't entered Calendarific API Key and Country."
-                                    "You can enter it in Settings.", self)
+            festival_label = QLabel(
+                "No festivals found. This could be because you haven't entered Calendarific API Key and Country."
+                "You can enter it in Settings.", self)
             festival_label.setWordWrap(True)
             vbox.addWidget(festival_label)
 
