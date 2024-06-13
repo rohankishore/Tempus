@@ -6,7 +6,7 @@ from PyQt6.QtCore import QDate, QSize, Qt
 from PyQt6.QtGui import QFont
 from PyQt6.QtWidgets import (QWidget, QCalendarWidget,
                              QLabel, QVBoxLayout, QDialog, QSpacerItem, QHBoxLayout,
-                             QListWidgetItem)
+                             QListWidgetItem, QInputDialog)
 from qfluentwidgets import (FluentIcon,
                             PushButton,
                             ListWidget, LineEdit)
@@ -56,6 +56,7 @@ class TodoDialog(QDialog):
         # Create the add button
         self.add_button = PushButton()
         self.add_button.setIcon(FluentIcon.ADD)
+        self.add_button.setText("Add Item")
         self.layout.addWidget(self.add_button)
 
         # Connect the button's clicked signal to the add_item method
@@ -90,7 +91,7 @@ class TodoDialog(QDialog):
 
         # Create a save button
         save_button = PushButton()
-        save_button.setText("✅")
+        save_button.setText("✔️")
         save_button.clicked.connect(lambda: self.save_item(item, line_edit_time, line_edit_description, line_edit_status))
 
         # Add the line edits and save button to the item layout
@@ -125,7 +126,6 @@ class TodoDialog(QDialog):
                             (date, time, description, status))
         self.conn.commit()
 
-
 class FestivalDialog(QDialog):
 
     def __init__(self, date, festivals):
@@ -155,10 +155,15 @@ class FestivalDialog(QDialog):
 
         add_todo_button = PushButton()
         add_todo_button.clicked.connect(self.add_todo)
-        add_todo_button.setText("Add TODOs / Reminders")
+        add_todo_button.setText("Add TODOs ➕")
+
+        mark_special_button = PushButton()
+        mark_special_button.clicked.connect(self.add_todo)
+        mark_special_button.setText("Mark as Special ✨")
 
         vbox.addWidget(festival_label, alignment=Qt.AlignmentFlag.AlignTop)
         hbox.addWidget(add_todo_button, alignment=Qt.AlignmentFlag.AlignTop)
+        hbox.addWidget(mark_special_button, alignment=Qt.AlignmentFlag.AlignTop)
 
         if festivals:
             for festival in festivals:
@@ -177,6 +182,10 @@ class FestivalDialog(QDialog):
 
     def add_todo(self):
         dialog = TodoDialog(self.date)
+        dialog.exec()
+
+    def mark_as(self):
+        ok, text = QInputDialog()
         dialog.exec()
 
 

@@ -16,7 +16,6 @@ from qframelesswindow import FramelessWindow, TitleBar
 
 from Calendar import Calendar
 from Dashboard import Dashboard
-from Stats import Stats
 
 APP_NAME = "Tempus"
 
@@ -207,7 +206,6 @@ class Window(FramelessWindow):
 
         self.homeInterface = None
         self.videoInterface = None
-        self.statsInterface = None
         self.settingsInterface = None
 
         if _config.get("start") == "True":
@@ -220,7 +218,6 @@ class Window(FramelessWindow):
     def start(self):
         self.homeInterface = Dashboard()
         self.videoInterface = Calendar()
-        self.statsInterface = Stats()
         # self.settingsInterface = Settings.SettingInterface()
         self.initLayout()
         self.initNavigation()
@@ -236,8 +233,6 @@ class Window(FramelessWindow):
     def initNavigation(self):
         self.addSubInterface(self.homeInterface, FIF.HOME, 'Dashboard', selectedIcon=FIF.HOME)
         self.addSubInterface(self.videoInterface, FIF.CALENDAR, 'Calendar', selectedIcon=FIF.CALENDAR)
-        self.addSubInterface(self.statsInterface, QIcon("resources/icons/stats.svg"), 'Stats',
-                             selectedIcon=QIcon("resources/icons/stats.svg"))
 
         self.navigationBar.addItem(
             routeKey='About',

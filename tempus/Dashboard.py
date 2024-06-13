@@ -3,7 +3,7 @@ import json
 import sqlite3
 
 import requests
-from PyQt6.QtCore import Qt
+from PyQt6.QtCore import Qt, QDate
 from PyQt6.QtGui import QIcon
 from PyQt6.QtWidgets import QVBoxLayout, QWidget, QDialog, QListWidgetItem
 from bs4 import BeautifulSoup
@@ -36,11 +36,30 @@ class ToDoToday(QDialog):
     def load_reminders_for_today(self):
         conn = sqlite3.connect('resources/misc/todos.db')
         cursor = conn.cursor()
-        cursor.execute('SELECT time, description, status FROM todos WHERE date = ?', (date_str.strip(),))
+
+        # Get today's date in the format stored in the database
+        today_date = datetime.datetime.now().strftime("%a %b %d %Y")
+        print(f"Loading reminders for date: {today_date}")
+
+        # Debugging step: Print all dates in the database
+        cursor.execute('SELECT DISTINCT date FROM todos')
+        all_dates = cursor.fetchall()
+        print("All dates in database:")
+        for date in all_dates:
+            print(date)
+
+        # Fetch reminders for today's date
+        cursor.execute('SELECT time, description, status FROM todos WHERE date = ?', (today_date,))
         todos = cursor.fetchall()
+        print(f"Found {len(todos)} reminders")
+
         for time, description, status in todos:
             reminder_item = QListWidgetItem(f"{time} - {description} - {status}")
             self.reminders_list.addItem(reminder_item)
+
+        if len(todos) == 0:
+            self.reminders_list.addItem(QListWidgetItem("Nothing on the agenda! Kick back and enjoy your day!"))
+
         conn.close()
 
 
@@ -62,12 +81,16 @@ class Dashboard(QWidget):
         self.setObjectName("Home")
 
         self.header_card = Widgets.DateTitleCard(date=date_str, dayofweek=day_of_week_str)
-        if zodiac != "":
-            self.header_card.setText(("<b>Today's Horoscope</b>: &#13;&#10;" + "\n" + "\n" + self.horoscope()))
-        else:
+        try:
+            if zodiac != "":
+                self.header_card.setText(("<b>Today's Horoscope</b>: &#13;&#10;" + "\n" + "\n" + self.horoscope()))
+            else:
+                self.header_card.setText(
+                    "<b>Can't find horoscope info. Make sure you have entered your Zodiac sign and you have a valid internet connection</b>:")
+            self.scroll_layout.addWidget(self.header_card)
+        except requests.exceptions.ConnectionError:
             self.header_card.setText(
-                "<b>Can't find horoscope info. Make sure you have entered your Zodiac sign and you have a valid internet connection</b>:")
-        self.scroll_layout.addWidget(self.header_card)
+                "<b>Make sure you have a valid internet connection</b>:")
 
         try:
             dob = self.parse_date(_config["dob"])
