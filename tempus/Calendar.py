@@ -92,7 +92,8 @@ class TodoDialog(QDialog):
         # Create a save button
         save_button = PushButton()
         save_button.setText("✔️")
-        save_button.clicked.connect(lambda: self.save_item(item, line_edit_time, line_edit_description, line_edit_status))
+        save_button.clicked.connect(
+            lambda: self.save_item(item, line_edit_time, line_edit_description, line_edit_status))
 
         # Add the line edits and save button to the item layout
         item_layout.addWidget(line_edit_time)
@@ -126,6 +127,7 @@ class TodoDialog(QDialog):
                             (date, time, description, status))
         self.conn.commit()
 
+
 class FestivalDialog(QDialog):
 
     def __init__(self, date, festivals):
@@ -134,6 +136,7 @@ class FestivalDialog(QDialog):
         self.setObjectName("Popup")
         self.setMinimumSize(QSize(500, 400))
         self.date = date
+
     # self.setMaximumSize(QSize(600, 500))
 
     def initUI(self, date, festivals):
@@ -157,13 +160,13 @@ class FestivalDialog(QDialog):
         add_todo_button.clicked.connect(self.add_todo)
         add_todo_button.setText("Add TODOs ➕")
 
-        mark_special_button = PushButton()
-        mark_special_button.clicked.connect(self.add_todo)
-        mark_special_button.setText("Mark as Special ✨")
+        mark_remainder_button = PushButton()
+        mark_remainder_button.clicked.connect(self.add_remainder)
+        mark_remainder_button.setText("Add Reminder 🎗️")
 
         vbox.addWidget(festival_label, alignment=Qt.AlignmentFlag.AlignTop)
         hbox.addWidget(add_todo_button, alignment=Qt.AlignmentFlag.AlignTop)
-        hbox.addWidget(mark_special_button, alignment=Qt.AlignmentFlag.AlignTop)
+        hbox.addWidget(mark_remainder_button, alignment=Qt.AlignmentFlag.AlignTop)
 
         if festivals:
             for festival in festivals:
@@ -184,9 +187,109 @@ class FestivalDialog(QDialog):
         dialog = TodoDialog(self.date)
         dialog.exec()
 
-    def mark_as(self):
-        ok, text = QInputDialog()
+    def add_remainder(self):
+        dialog = ReminderDialog(self.date)
         dialog.exec()
+
+
+class ReminderDialog(QDialog):
+    def __init__(self, date):
+        super().__init__()
+        self.date = date.toString()
+
+        # Set up the database connection
+        self.conn = sqlite3.connect('resources/misc/reminders.db')
+        self.cursor = self.conn.cursor()
+
+        # Create a table to store reminders
+        self.cursor.execute('''
+            CREATE TABLE IF NOT EXISTS reminders (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                date TEXT,
+                time TEXT,
+                description TEXT
+            )
+        ''')
+        self.conn.commit()
+
+        # Set up the dialog layout
+        self.setWindowTitle(f"Reminders for {self.date}")
+        self.setGeometry(100, 100, 400, 300)
+
+        self.layout = QVBoxLayout(self)
+
+        # Create the QListWidget
+        self.list_widget = ListWidget()
+        self.layout.addWidget(self.list_widget)
+
+        # Create the add button
+        self.add_button = PushButton()
+        self.add_button.setIcon(FluentIcon.ADD)
+        self.add_button.setText("Add Reminder")
+        self.layout.addWidget(self.add_button)
+
+        # Connect the button's clicked signal to the add_reminder method
+        self.add_button.clicked.connect(self.add_reminder)
+
+        # Load existing reminders for the given date
+        self.load_reminders()
+
+    def load_reminders(self):
+        self.cursor.execute('SELECT time, description FROM reminders WHERE date = ?', (self.date,))
+        reminders = self.cursor.fetchall()
+        for time, description in reminders:
+            self.add_item_to_list(time, description)
+
+    def add_reminder(self):
+        # Create a new list widget item
+        item = QListWidgetItem()
+        self.list_widget.addItem(item)
+
+        # Create a widget to hold the line edits and save button
+        item_widget = QWidget()
+        item_layout = QHBoxLayout(item_widget)
+        item_layout.setContentsMargins(0, 0, 0, 0)
+
+        # Create line edits for time and description
+        line_edit_time = LineEdit()
+        line_edit_time.setPlaceholderText("Time")
+        line_edit_description = LineEdit()
+        line_edit_description.setPlaceholderText("Description")
+
+        # Create a save button
+        save_button = PushButton()
+        save_button.setText("✔️")
+        save_button.clicked.connect(lambda: self.save_reminder(item, line_edit_time, line_edit_description))
+
+        # Add the line edits and save button to the item layout
+        item_layout.addWidget(line_edit_time)
+        item_layout.addWidget(line_edit_description)
+        item_layout.addWidget(save_button)
+
+        # Set the item widget to the QListWidgetItem
+        self.list_widget.setItemWidget(item, item_widget)
+
+        # Set focus to the first QLineEdit to start editing
+        line_edit_time.setFocus()
+
+    def save_reminder(self, item, line_edit_time, line_edit_description):
+        time = line_edit_time.text()
+        description = line_edit_description.text()
+        if time and description:
+            self.add_reminder_to_db(self.date, time, description)
+            self.add_item_to_list(time, description)
+            self.list_widget.takeItem(self.list_widget.row(item))  # Remove the editable item
+
+    def add_item_to_list(self, time, description):
+        # Create a new list widget item with the provided details
+        item = QListWidgetItem(f"{time} - {description}")
+        item.setFlags(item.flags() | Qt.ItemFlag.ItemIsEditable)
+        self.list_widget.addItem(item)
+
+    def add_reminder_to_db(self, date, time, description):
+        self.cursor.execute('INSERT INTO reminders (date, time, description) VALUES (?, ?, ?)',
+                            (date, time, description))
+        self.conn.commit()
 
 
 class Calendar(QCalendarWidget):
