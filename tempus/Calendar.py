@@ -5,12 +5,11 @@ import requests
 from PyQt6.QtCore import QDate, QSize, Qt
 from PyQt6.QtGui import QFont
 from PyQt6.QtWidgets import (QWidget, QCalendarWidget,
-                             QLabel, QVBoxLayout, QDialog, QSpacerItem, QStyleOptionViewItem, QStyle, QHBoxLayout)
-from qfluentwidgets import (CardWidget, IconWidget, BodyLabel, CaptionLabel, TransparentToolButton, FluentIcon,
-                            RoundMenu, Action, ImageLabel, SimpleCardWidget,
-                            HeaderCardWidget, HyperlinkLabel, PrimaryPushButton, TitleLabel, PillPushButton, PushButton,
-                            setFont,
-                            VerticalSeparator, ListWidget, ListView, ListItemDelegate)
+                             QLabel, QVBoxLayout, QDialog, QSpacerItem, QHBoxLayout,
+                             QListWidgetItem)
+from qfluentwidgets import (FluentIcon,
+                            PushButton,
+                            ListWidget, LineEdit)
 
 with open("resources/misc/config.json") as config_file:
     _config = json.load(config_file)
@@ -22,30 +21,109 @@ with open("resources/misc/config.json") as config_file:
 API_KEY = _config["api-key"]
 COUNTRY = _config['country']
 
+
 class TodoDialog(QDialog):
     def __init__(self, date):
         super().__init__()
+        self.date = date.toString()
 
+        # Set up the database connection
         self.conn = sqlite3.connect('resources/misc/todos.db')
         self.cursor = self.conn.cursor()
 
         # Create a table to store todos
         self.cursor.execute('''
-                CREATE TABLE IF NOT EXISTS todos (
-                    id INTEGER PRIMARY KEY AUTOINCREMENT,
-                    date TEXT,
-                    time TEXT,
-                    description TEXT,
-                    status TEXT
-                )
-                ''')
+            CREATE TABLE IF NOT EXISTS todos (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                date TEXT,
+                time TEXT,
+                description TEXT,
+                status TEXT
+            )
+        ''')
         self.conn.commit()
+
+        # Set up the dialog layout
+        self.setWindowTitle(f"Todo List for {self.date}")
+        self.setGeometry(100, 100, 400, 300)
+
+        self.layout = QVBoxLayout(self)
+
+        # Create the QListWidget
+        self.list_widget = ListWidget()
+        self.layout.addWidget(self.list_widget)
+
+        # Create the add button
+        self.add_button = PushButton()
+        self.add_button.setIcon(FluentIcon.ADD)
+        self.layout.addWidget(self.add_button)
+
+        # Connect the button's clicked signal to the add_item method
+        self.add_button.clicked.connect(self.add_item)
+
+        # Load existing todos for the given date
+        self.load_todos()
+
+    def load_todos(self):
+        self.cursor.execute('SELECT time, description, status FROM todos WHERE date = ?', (self.date,))
+        todos = self.cursor.fetchall()
+        for time, description, status in todos:
+            self.add_item_to_list(time, description, status)
+
+    def add_item(self):
+        # Create a new list widget item
+        item = QListWidgetItem()
+        self.list_widget.addItem(item)
+
+        # Create a widget to hold the line edits and save button
+        item_widget = QWidget()
+        item_layout = QHBoxLayout(item_widget)
+        item_layout.setContentsMargins(0, 0, 0, 0)
+
+        # Create line edits for time, description, and status
+        line_edit_time = LineEdit()
+        line_edit_time.setPlaceholderText("Time")
+        line_edit_description = LineEdit()
+        line_edit_description.setPlaceholderText("Description")
+        line_edit_status = LineEdit()
+        line_edit_status.setPlaceholderText("Status")
+
+        # Create a save button
+        save_button = PushButton()
+        save_button.setText("✅")
+        save_button.clicked.connect(lambda: self.save_item(item, line_edit_time, line_edit_description, line_edit_status))
+
+        # Add the line edits and save button to the item layout
+        item_layout.addWidget(line_edit_time)
+        item_layout.addWidget(line_edit_description)
+        item_layout.addWidget(line_edit_status)
+        item_layout.addWidget(save_button)
+
+        # Set the item widget to the QListWidgetItem
+        self.list_widget.setItemWidget(item, item_widget)
+
+        # Set focus to the first QLineEdit to start editing
+        line_edit_time.setFocus()
+
+    def save_item(self, item, line_edit_time, line_edit_description, line_edit_status):
+        time = line_edit_time.text()
+        description = line_edit_description.text()
+        status = line_edit_status.text()
+        if time and description and status:
+            self.add_todo(self.date, time, description, status)
+            self.add_item_to_list(time, description, status)
+            self.list_widget.takeItem(self.list_widget.row(item))  # Remove the editable item
+
+    def add_item_to_list(self, time, description, status):
+        # Create a new list widget item with the provided details
+        item = QListWidgetItem(f"{time} - {description} - {status}")
+        item.setFlags(item.flags() | Qt.ItemFlag.ItemIsEditable)
+        self.list_widget.addItem(item)
 
     def add_todo(self, date, time, description, status):
         self.cursor.execute('INSERT INTO todos (date, time, description, status) VALUES (?, ?, ?, ?)',
                             (date, time, description, status))
         self.conn.commit()
-
 
 
 class FestivalDialog(QDialog):
@@ -55,6 +133,7 @@ class FestivalDialog(QDialog):
         self.initUI(date, festivals)
         self.setObjectName("Popup")
         self.setMinimumSize(QSize(500, 400))
+        self.date = date
     # self.setMaximumSize(QSize(600, 500))
 
     def initUI(self, date, festivals):
@@ -75,6 +154,7 @@ class FestivalDialog(QDialog):
         festival_label.setOpenExternalLinks(True)
 
         add_todo_button = PushButton()
+        add_todo_button.clicked.connect(self.add_todo)
         add_todo_button.setText("Add TODOs / Reminders")
 
         vbox.addWidget(festival_label, alignment=Qt.AlignmentFlag.AlignTop)
@@ -94,6 +174,10 @@ class FestivalDialog(QDialog):
         self.setLayout(vbox)
         self.setWindowTitle((date.toString()))
         self.setGeometry(400, 400, 300, 150)
+
+    def add_todo(self):
+        dialog = TodoDialog(self.date)
+        dialog.exec()
 
 
 class Calendar(QCalendarWidget):

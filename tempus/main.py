@@ -1,4 +1,5 @@
 # coding:utf-8
+import json
 import sys
 
 import pycountry
@@ -15,9 +16,7 @@ from qframelesswindow import FramelessWindow, TitleBar
 
 from Calendar import Calendar
 from Dashboard import Dashboard
-#from Settings import SettingInterface
 from Stats import Stats
-import json
 
 APP_NAME = "Tempus"
 
@@ -222,7 +221,7 @@ class Window(FramelessWindow):
         self.homeInterface = Dashboard()
         self.videoInterface = Calendar()
         self.statsInterface = Stats()
-        #self.settingsInterface = SettingInterface()
+        # self.settingsInterface = Settings.SettingInterface()
         self.initLayout()
         self.initNavigation()
         self.initWindow()

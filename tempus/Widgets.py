@@ -1,10 +1,11 @@
 # coding:utf-8
+
 from PyQt6.QtCore import Qt, QUrl, QSize
 from PyQt6.QtWidgets import QHBoxLayout, QVBoxLayout
 from qfluentwidgets import (CardWidget, IconWidget, BodyLabel, CaptionLabel, TransparentToolButton, FluentIcon,
                             RoundMenu, Action, ImageLabel, SimpleCardWidget,
                             HeaderCardWidget, HyperlinkLabel, PrimaryPushButton, TitleLabel, PillPushButton, setFont,
-                            VerticalSeparator, PushButton)
+                            VerticalSeparator)
 
 
 class AppCard(CardWidget):
@@ -52,14 +53,18 @@ class AppCard(CardWidget):
         # pos = self.moreButton.mapToGlobal(QPoint(x, self.moreButton.height()))
         # menu.exec(pos)
 
+
 class AppointmentsCard(CardWidget):
     def __init__(self, icon, title, content, parent=None):
         super().__init__(parent)
         self.iconWidget = IconWidget(icon)
         self.titleLabel = BodyLabel(title, self)
         self.contentLabel = CaptionLabel(content, self)
-        #self.openButton = PushButton('', self)
+        # self.openButton = PushButton('', self)
+        # self.openButton.setIcon(FluentIcon.RIGHT_ARROW)
         self.moreButton = TransparentToolButton(FluentIcon.RIGHT_ARROW, self)
+
+        self.parent = parent
 
         self.hBoxLayout = QHBoxLayout(self)
         self.vBoxLayout = QVBoxLayout()
@@ -81,21 +86,22 @@ class AppointmentsCard(CardWidget):
         self.hBoxLayout.addLayout(self.vBoxLayout)
 
         self.hBoxLayout.addStretch(1)
-        #self.hBoxLayout.addWidget(self.openButton, 0, Qt.AlignmentFlag.AlignRight)
+        # self.hBoxLayout.addWidget(self.openButton, 0, Qt.AlignmentFlag.AlignRight)
         self.hBoxLayout.addWidget(self.moreButton, 0, Qt.AlignmentFlag.AlignRight)
 
-        # self.moreButton.setFixedSize(32, 32)
-        # self.moreButton.clicked.connect(self.onMoreButtonClicked)
+        self.moreButton.setFixedSize(32, 32)
+        self.moreButton.clicked.connect(self.onMoreButtonClicked)
+
+    # def onMoreButtonClicked(self):
+    # menu = RoundMenu(parent=self)
+    # menu.addAction(Action(FluentIcon.VIEW, 'View All TODOs', self))
+
+    # x = (self.moreButton.width() - menu.width()) // 2 + 10
+    # pos = self.moreButton.mapToGlobal(QPoint(x, self.moreButton.height()))
+    # menu.exec(pos)
 
     def onMoreButtonClicked(self):
-        menu = RoundMenu(parent=self)
-        menu.addAction(Action(FluentIcon.SHARE, '共享', self))
-        menu.addAction(Action(FluentIcon.CHAT, '写评论', self))
-        menu.addAction(Action(FluentIcon.PIN, '固定到任务栏', self))
-
-        # x = (self.moreButton.width() - menu.width()) // 2 + 10
-        # pos = self.moreButton.mapToGlobal(QPoint(x, self.moreButton.height()))
-        # menu.exec(pos)
+        self.parent.today_todo()
 
 
 
