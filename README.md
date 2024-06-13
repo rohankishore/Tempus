@@ -19,7 +19,7 @@ Tempus is a desktop calendar app made using PyQt6.
 
 ## 🧩 Interface  
 
-![image](https://github.com/rohankishore/Tempus/assets/109947257/deae2094-f42e-4191-8941-602287c0a32c)
+![image](https://github.com/rohankishore/Tempus/assets/109947257/a1412f0b-97d8-4a7f-b1c9-7f234be78e95)
 
 
 <br>
