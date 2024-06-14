@@ -227,6 +227,10 @@ class Dashboard(QWidget):
         self.addCard_V(QIcon("resources/icons/cake.png"),
                        f"{days_rem_till_bday}", "days remaining till birthday")
 
+        #####################################################
+
+        self.add_special_date_cards()
+
         self.show()
 
     def addCard_V(self, icon=None, title=None, content=None):
@@ -252,6 +256,37 @@ class Dashboard(QWidget):
         # Ensure the date format matches the actual format in the database
         date = datetime.datetime.strptime(date_str.strip(), "%Y-%m-%d").strftime("%a %b %d %Y")
         cursor.execute('SELECT COUNT(*) FROM todos WHERE date = ?', (date,))
+        count = cursor.fetchone()[0]
+        conn.close()
+        return count
+
+    def get_special_dates(self):
+        conn = sqlite3.connect('resources/misc/special_dates.db')
+        cursor = conn.cursor()
+        cursor.execute('SELECT date, reason FROM special_dates')
+        special_dates = cursor.fetchall()
+        conn.close()
+        return special_dates
+
+    def add_special_date_cards(self):
+        special_dates = self.get_special_dates()
+        today = datetime.datetime.today()
+
+        for date_str, reason in special_dates:
+            special_date = datetime.datetime.strptime(date_str, '%a %b %d %Y')
+            days_until = (special_date - today).days
+
+            if days_until >= 0:
+                self.addCard_V(QIcon("resources/icons/special.png"),
+                               f"{days_until}", f"days remaining till {reason}")
+
+    def get_number_of_todos_for_spcl_date(self, date_str):
+        conn = sqlite3.connect('resources/misc/special_dates.db')
+        cursor = conn.cursor()
+
+        # Ensure the date format matches the actual format in the database
+        date = datetime.datetime.strptime(date_str.strip(), "%Y-%m-%d").strftime("%a %b %d %Y")
+        cursor.execute('SELECT COUNT(*) FROM special_dates WHERE date = ?', (date,))
         count = cursor.fetchone()[0]
         conn.close()
         return count
