@@ -2,21 +2,17 @@ import json
 import sqlite3
 
 import requests
-from PyQt6.QtCore import QDate, QSize, Qt
+from PyQt6.QtCore import QDate, QSize, Qt, QPoint
 from PyQt6.QtGui import QFont
 from PyQt6.QtWidgets import (QWidget, QCalendarWidget,
                              QLabel, QVBoxLayout, QDialog, QSpacerItem, QHBoxLayout,
                              QListWidgetItem)
 from qfluentwidgets import (FluentIcon,
                             PushButton,
-                            ListWidget, LineEdit)
+                            ListWidget, LineEdit, RoundMenu, Action)
 
 with open("resources/misc/config.json") as config_file:
     _config = json.load(config_file)
-
-# API_KEY = 'kFMc4CuIbuiw79o9q0dYwUuKAD1lhdbk'
-# COUNTRY = 'IN'
-
 
 API_KEY = _config["api-key"]
 COUNTRY = _config['country']
@@ -31,7 +27,7 @@ class TodoDialog(QDialog):
         self.conn = sqlite3.connect('resources/misc/todos.db')
         self.cursor = self.conn.cursor()
 
-        # Create a table to store todos
+        # Create a table to store todos if not exists
         self.cursor.execute('''
             CREATE TABLE IF NOT EXISTS todos (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -53,6 +49,9 @@ class TodoDialog(QDialog):
         self.list_widget = ListWidget()
         self.layout.addWidget(self.list_widget)
 
+        self.list_widget.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
+        self.list_widget.customContextMenuRequested.connect(self.show_context_menu)
+
         # Create the add button
         self.add_button = PushButton()
         self.add_button.setIcon(FluentIcon.ADD)
@@ -66,10 +65,36 @@ class TodoDialog(QDialog):
         self.load_todos()
 
     def load_todos(self):
-        self.cursor.execute('SELECT time, description, status FROM todos WHERE date = ?', (self.date,))
+        self.cursor.execute('SELECT id, time, description, status FROM todos WHERE date = ?', (self.date,))
         todos = self.cursor.fetchall()
-        for time, description, status in todos:
-            self.add_item_to_list(time, description, status)
+        for todo_id, time, description, status in todos:
+            self.add_item_to_list(todo_id, time, description, status)
+
+    def show_context_menu(self, position: QPoint):
+        menu = RoundMenu()
+        delete_action = Action(FluentIcon.DELETE, "Delete", self)
+        delete_action.triggered.connect(self.delete_item)
+        menu.addAction(delete_action)
+        action = menu.exec(self.list_widget.mapToGlobal(position))
+
+        if action == delete_action:
+            self.delete_item()
+
+    def delete_item(self):
+        selected_item = self.list_widget.currentItem()
+        if selected_item:
+            todo_id = selected_item.data(Qt.ItemDataRole.UserRole)
+            print(f"Deleting todo with id: {todo_id}")  # Debug: print the id to be deleted
+            if todo_id is not None:
+                self.remove_todo_from_database(todo_id)
+                self.list_widget.takeItem(self.list_widget.row(selected_item))
+            else:
+                print("Error: No todo_id found for the selected item.")
+
+    def remove_todo_from_database(self, todo_id):
+        self.cursor.execute('DELETE FROM todos WHERE id = ?', (todo_id,))
+        self.conn.commit()
+        print(f"Deleted todo with id: {todo_id} from database")
 
     def add_item(self):
         # Create a new list widget item
@@ -112,20 +137,22 @@ class TodoDialog(QDialog):
         description = line_edit_description.text()
         status = line_edit_status.text()
         if time and description and status:
-            self.add_todo(self.date, time, description, status)
-            self.add_item_to_list(time, description, status)
+            todo_id = self.add_todo(self.date, time, description, status)
+            self.add_item_to_list(todo_id, time, description, status)
             self.list_widget.takeItem(self.list_widget.row(item))  # Remove the editable item
 
-    def add_item_to_list(self, time, description, status):
+    def add_item_to_list(self, todo_id, time, description, status):
         # Create a new list widget item with the provided details
         item = QListWidgetItem(f"{time} - {description} - {status}")
         item.setFlags(item.flags() | Qt.ItemFlag.ItemIsEditable)
+        item.setData(Qt.ItemDataRole.UserRole, todo_id)  # Store the id in the item
         self.list_widget.addItem(item)
 
     def add_todo(self, date, time, description, status):
         self.cursor.execute('INSERT INTO todos (date, time, description, status) VALUES (?, ?, ?, ?)',
                             (date, time, description, status))
         self.conn.commit()
+        return self.cursor.lastrowid
 
 
 class FestivalDialog(QDialog):
@@ -210,16 +237,8 @@ class ReminderDialog(QDialog):
         self.conn = sqlite3.connect('resources/misc/reminders.db')
         self.cursor = self.conn.cursor()
 
-        # Create a table to store reminders
-        self.cursor.execute('''
-            CREATE TABLE IF NOT EXISTS reminders (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                date TEXT,
-                time TEXT,
-                description TEXT
-            )
-        ''')
-        self.conn.commit()
+        # Create a table to store reminders if not exists
+        self.create_reminders_table()
 
         # Set up the dialog layout
         self.setWindowTitle(f"Reminders for {self.date}")
@@ -243,11 +262,26 @@ class ReminderDialog(QDialog):
         # Load existing reminders for the given date
         self.load_reminders()
 
+        # Set up context menu for list widget
+        self.list_widget.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
+        self.list_widget.customContextMenuRequested.connect(self.show_context_menu)
+
+    def create_reminders_table(self):
+        self.cursor.execute('''
+            CREATE TABLE IF NOT EXISTS reminders (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                date TEXT,
+                time TEXT,
+                description TEXT
+            )
+        ''')
+        self.conn.commit()
+
     def load_reminders(self):
-        self.cursor.execute('SELECT time, description FROM reminders WHERE date = ?', (self.date,))
+        self.cursor.execute('SELECT id, time, description FROM reminders WHERE date = ?', (self.date,))
         reminders = self.cursor.fetchall()
-        for time, description in reminders:
-            self.add_item_to_list(time, description)
+        for reminder_id, time, description in reminders:
+            self.add_reminder_to_list(reminder_id, time, description)
 
     def add_reminder(self):
         # Create a new list widget item
@@ -286,20 +320,44 @@ class ReminderDialog(QDialog):
         description = line_edit_description.text()
         if time and description:
             self.add_reminder_to_db(self.date, time, description)
-            self.add_item_to_list(time, description)
+            self.add_reminder_to_list(None, time, description)  # None for ID as it's a new item
             self.list_widget.takeItem(self.list_widget.row(item))  # Remove the editable item
-
-    def add_item_to_list(self, time, description):
-        # Create a new list widget item with the provided details
-        item = QListWidgetItem(f"{time} - {description}")
-        item.setFlags(item.flags() | Qt.ItemFlag.ItemIsEditable)
-        self.list_widget.addItem(item)
 
     def add_reminder_to_db(self, date, time, description):
         self.cursor.execute('INSERT INTO reminders (date, time, description) VALUES (?, ?, ?)',
                             (date, time, description))
         self.conn.commit()
 
+    def add_reminder_to_list(self, reminder_id, time, description):
+        # Create a new list widget item with the provided details
+        item = QListWidgetItem(f"{time} - {description}")
+        item.setData(Qt.ItemDataRole.UserRole, reminder_id)  # Set the reminder ID as UserRole
+        item.setFlags(item.flags() | Qt.ItemFlag.ItemIsEditable)
+        self.list_widget.addItem(item)
+
+    def show_context_menu(self, position: QPoint):
+        menu = RoundMenu()
+        delete_action = Action(FluentIcon.DELETE, "Delete", self)
+        delete_action.triggered.connect(self.delete_reminder)
+        menu.addAction(delete_action)
+        action = menu.exec(self.list_widget.mapToGlobal(position))
+
+        if action == delete_action:
+            self.delete_reminder()
+
+    def delete_reminder(self):
+        selected_item = self.list_widget.currentItem()
+        if selected_item:
+            reminder_id = selected_item.data(Qt.ItemDataRole.UserRole)
+            if reminder_id is not None:
+                self.remove_reminder_from_database(reminder_id)
+                self.list_widget.takeItem(self.list_widget.row(selected_item))
+            else:
+                print("Error: No reminder_id found for the selected item.")
+
+    def remove_reminder_from_database(self, reminder_id):
+        self.cursor.execute('DELETE FROM reminders WHERE id = ?', (reminder_id,))
+        self.conn.commit()
 
 class SpecialDateDialog(QDialog):
     def __init__(self, date):

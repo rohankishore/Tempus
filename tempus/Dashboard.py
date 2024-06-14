@@ -68,7 +68,12 @@ class ToDoToday(QDialog):
 
     def show_context_menu(self, position: QPoint):
         menu = RoundMenu()
+        mark_as_done_action = Action(FluentIcon.CHECKBOX, "Mark as Done", self)
         delete_action = Action(FluentIcon.DELETE, "Mark as Done & Delete", self)
+        delete_action.triggered.connect(self.delete_item)
+        mark_as_done_action.triggered.connect(self.mark_as_done)
+        menu.addAction(mark_as_done_action)
+        menu.addAction(delete_action)
         action = menu.exec(self.reminders_list.mapToGlobal(position))
 
         if action == delete_action:
@@ -85,6 +90,27 @@ class ToDoToday(QDialog):
             else:
                 print("Error: No todo_id found for the selected item.")
 
+    def mark_as_done(self):
+        selected_item = self.reminders_list.currentItem()
+        if selected_item:
+            todo_id = selected_item.data(Qt.ItemDataRole.UserRole)
+            if todo_id is not None:
+                self.update_todo_status_in_database(todo_id)
+                self.update_list_widget_item(selected_item)
+
+    def update_todo_status_in_database(self, todo_id):
+        conn = sqlite3.connect('resources/misc/todos.db')
+        cursor = conn.cursor()
+        cursor.execute('UPDATE todos SET status = ? WHERE id = ?', ("Done", todo_id))
+        conn.commit()
+        conn.close()
+
+    def update_list_widget_item(self, item):
+        parts = item.text().rsplit(" - ", 1)  # Split on the last occurrence of " - "
+        if len(parts) == 2:
+            new_text = f"{parts[0]} - Done"
+            item.setText(new_text)
+
     def remove_todo_from_database(self, todo_id):
         conn = sqlite3.connect('resources/misc/todos.db')
         cursor = conn.cursor()
@@ -97,7 +123,7 @@ class ToDoToday(QDialog):
 class ReminderToday(QDialog):
     def __init__(self):
         super().__init__()
-        self.setWindowTitle("TODOs for Today")
+        self.setWindowTitle("Reminders for Today")
         self.layout = QVBoxLayout(self)
 
         self.reminders_list = ListWidget()
@@ -142,16 +168,15 @@ class ReminderToday(QDialog):
     def show_context_menu(self, position: QPoint):
         menu = RoundMenu()
         delete_action = Action(FluentIcon.DELETE, "Mark as Done & Delete", self)
+        delete_action.triggered.connect(self.delete_item)
+        menu.addAction(delete_action)
         action = menu.exec(self.reminders_list.mapToGlobal(position))
-
-        if action == delete_action:
-            self.delete_item()
 
     def delete_item(self):
         selected_item = self.reminders_list.currentItem()
         if selected_item:
             todo_id = selected_item.data(Qt.ItemDataRole.UserRole)
-            print(f"Deleting todo with id: {todo_id}")  # Debug: print the id to be deleted
+            print(f"Deleting reminder with id: {todo_id}")  # Debug: print the id to be deleted
             if todo_id is not None:
                 self.remove_todo_from_database(todo_id)
                 self.reminders_list.takeItem(self.reminders_list.row(selected_item))
@@ -159,9 +184,9 @@ class ReminderToday(QDialog):
                 print("Error: No todo_id found for the selected item.")
 
     def remove_todo_from_database(self, todo_id):
-        conn = sqlite3.connect('resources/misc/todos.db')
+        conn = sqlite3.connect('resources/misc/reminders.db')
         cursor = conn.cursor()
-        cursor.execute('DELETE FROM todos WHERE id = ?', (todo_id,))
+        cursor.execute('DELETE FROM reminders WHERE id = ?', (todo_id,))
         conn.commit()
         conn.close()
         print(f"Deleted todo with id: {todo_id} from database")
