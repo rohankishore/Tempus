@@ -31,7 +31,7 @@ Tempus is a desktop calendar app made using PyQt6.
 ## 👒 Getting Started
   
 ### Download EXE
-- Head over to [Releases](https://github.com/rohankishore/Youtility/releases)
+- Head over to [Releases](https://github.com/rohankishore/Tempus/releases)
 - Download `Tempus_vX.zip` file (where X is the current latest version)
 - Unzip the file
 - Run `main.exe`
