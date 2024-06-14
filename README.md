@@ -6,17 +6,18 @@
         
 ## 📺 What is Tempus? 
 
-Tempus is a desktop calendar app made using PyQt6.
+Tempus is a desktop calendar app with Horoscope, TODO, Reminders, etc made using PyQt6.
 
 **It's features include**
 - Calendar (duh)
-- Adding TODOs / appointments to a date
+- Adding TODOs/appointments to a date
 - View different festivals for a specific date
 - Horoscopes
-- Mark a day as special
+- Mark a day as _✨special✨_
 - Cool UI
 - and much much more
-  
+
+> ⚠️ To get the full feature kit of Tempus, you'll need to enter your [Calendarific](https://calendarific.com/) API and your country of choice. Please note that Calendarific has a monthly limit of 500 requests, so you may have to change your API keys occasionally. ⚠️
 
 ## 🧩 Interface  
 
@@ -45,7 +46,6 @@ pip install -r requirements.txt
 - Run `main.py`
   
 <br>
-
 
 ## 🤝 Show Support  
 
