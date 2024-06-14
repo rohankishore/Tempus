@@ -1,7 +1,6 @@
 <div align="center">
   
-![icon](https://github.com/rohankishore/Tempus/assets/109947257/f5f1b8d6-bf43-4dbc-b023-8c8772489fbc)
-<h1 align="center"> Tempus 📆 </h1>
+![WELCOME!](https://github.com/rohankishore/Tempus/assets/109947257/de8ee673-a903-46ca-960a-5d6d76c4c29f)
 
 </div>
         
