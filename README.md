@@ -14,6 +14,8 @@ Tempus is a desktop calendar app made using PyQt6.
 - Adding TODOs / appointments to a date
 - View different festivals for a specific date
 - Horoscopes
+- Mark a day as special
+- Cool UI
 - and much much more
   
 
