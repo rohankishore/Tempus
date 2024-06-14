@@ -191,14 +191,14 @@ class FestivalDialog(QDialog):
         mark_remainder_button.clicked.connect(self.add_remainder)
         mark_remainder_button.setText("Add Reminder 🎗️")
 
-        mark_special_button = PushButton()
-        mark_special_button.setText("Mark as Special ✨")
-        mark_special_button.clicked.connect(self.mark_special)
+        self.mark_special_button = PushButton()
+        self.mark_special_button.setText("Mark as Special ✨")
+        self.mark_special_button.clicked.connect(self.mark_special)
 
         vbox.addWidget(festival_label, alignment=Qt.AlignmentFlag.AlignTop)
         hbox.addWidget(add_todo_button, alignment=Qt.AlignmentFlag.AlignTop)
         hbox.addWidget(mark_remainder_button, alignment=Qt.AlignmentFlag.AlignTop)
-        vbox.addWidget(mark_special_button)
+        vbox.addWidget(self.mark_special_button)
 
         if festivals:
             for festival in festivals:
@@ -226,6 +226,11 @@ class FestivalDialog(QDialog):
     def mark_special(self):
         dialog = SpecialDateDialog(self.date)
         dialog.exec()
+
+    def clear_special_date(self):
+        y = SpecialDateDialog(self.date)
+        y.hide()
+        y.clear_special_date()
 
 
 class ReminderDialog(QDialog):
@@ -359,6 +364,7 @@ class ReminderDialog(QDialog):
         self.cursor.execute('DELETE FROM reminders WHERE id = ?', (reminder_id,))
         self.conn.commit()
 
+
 class SpecialDateDialog(QDialog):
     def __init__(self, date):
         super().__init__()
@@ -368,15 +374,8 @@ class SpecialDateDialog(QDialog):
         self.conn = sqlite3.connect('resources/misc/special_dates.db')
         self.cursor = self.conn.cursor()
 
-        # Create a table to store special dates
-        self.cursor.execute('''
-            CREATE TABLE IF NOT EXISTS special_dates (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                date TEXT,
-                reason TEXT
-            )
-        ''')
-        self.conn.commit()
+        # Create a table to store special dates if not exists
+        self.create_special_dates_table()
 
         # Set up the dialog layout
         self.setWindowTitle(f"Special Date: {self.date}")
@@ -391,15 +390,36 @@ class SpecialDateDialog(QDialog):
 
         # Create the save button
         self.save_button = PushButton()
-        self.save_button.setIcon(FluentIcon.SAVE)
         self.save_button.setText("Save")
         self.layout.addWidget(self.save_button)
 
-        # Connect the button's clicked signal to the save_special_date method
+        # Create the clear button
+        self.clear_button = PushButton()
+
+        self.cursor.execute('SELECT reason FROM special_dates WHERE date = ?', (self.date,))
+        result = self.cursor.fetchone()
+        if result:
+            self.clear_button.setText("Unmark as Special")
+            self.layout.addWidget(self.clear_button)
+        else:
+            self.clear_button.hide()
+
+        # Connect button signals to methods
         self.save_button.clicked.connect(self.save_special_date)
+        self.clear_button.clicked.connect(self.clear_special_date)
 
         # Load existing special date if any
         self.load_special_date()
+
+    def create_special_dates_table(self):
+        self.cursor.execute('''
+            CREATE TABLE IF NOT EXISTS special_dates (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                date TEXT,
+                reason TEXT
+            )
+        ''')
+        self.conn.commit()
 
     def load_special_date(self):
         self.cursor.execute('SELECT reason FROM special_dates WHERE date = ?', (self.date,))
@@ -413,6 +433,11 @@ class SpecialDateDialog(QDialog):
             self.cursor.execute('REPLACE INTO special_dates (date, reason) VALUES (?, ?)', (self.date, reason))
             self.conn.commit()
             self.close()
+
+    def clear_special_date(self):
+        self.cursor.execute('DELETE FROM special_dates WHERE date = ?', (self.date,))
+        self.conn.commit()
+        self.reason_input.clear()
 
 
 class Calendar(QCalendarWidget):
