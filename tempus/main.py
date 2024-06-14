@@ -16,10 +16,10 @@ from qfluentwidgets import (NavigationBar, NavigationItemPosition, MessageBox,
 from qframelesswindow import FramelessWindow, TitleBar
 
 from Calendar import Calendar
+from Settings import SettingInterface
 from Dashboard import Dashboard
 
 APP_NAME = "Tempus"
-
 
 with open("resources/misc/config.json") as config_file:
     _config = json.load(config_file)
@@ -66,7 +66,7 @@ class Onboarding(QDialog):
         self.left_layout.addWidget(self.country_edit)
         self.left_layout.addWidget(self.api_key_edit)
         self.left_layout.addWidget(self.zodiac_sign)
-        self.left_layout.addWidget(self.submit, alignment=Qt.AlignmentFlag.AlignBottom)
+        self.left_layout.addWidget(self.submit)
 
         # Right layout
         self.right_layout = QHBoxLayout()
@@ -100,9 +100,6 @@ class Onboarding(QDialog):
 
         with open("resources/misc/config.json", "w") as config_file:
             json.dump(_config, config_file)
-
-        self.accept()
-        self.goto_app()
 
     def goto_app(self):
         self.accept()
@@ -251,9 +248,9 @@ class Window(FramelessWindow):
         ''')
         self.conn3.commit()
 
-
         self.homeInterface = None
-        self.videoInterface = None
+        self.calendarInterface = None
+        self.settingsInterface = None
         self.statsInterface = None
 
         if _config.get("start") == "True":
@@ -265,7 +262,8 @@ class Window(FramelessWindow):
 
     def start(self):
         self.homeInterface = Dashboard()
-        self.videoInterface = Calendar()
+        self.calendarInterface = Calendar()
+        self.settingsInterface = SettingInterface()
         self.initLayout()
         self.initNavigation()
         self.initWindow()
@@ -279,7 +277,8 @@ class Window(FramelessWindow):
 
     def initNavigation(self):
         self.addSubInterface(self.homeInterface, FIF.HOME, 'Dashboard', selectedIcon=FIF.HOME)
-        self.addSubInterface(self.videoInterface, FIF.CALENDAR, 'Calendar', selectedIcon=FIF.CALENDAR)
+        self.addSubInterface(self.calendarInterface, FIF.CALENDAR, 'Calendar', selectedIcon=FIF.CALENDAR)
+        self.addSubInterface(self.settingsInterface, FIF.SETTING, 'Settings', selectedIcon=FIF.SETTING)
 
         self.navigationBar.addItem(
             routeKey='About',
@@ -322,7 +321,6 @@ class Window(FramelessWindow):
     def onCurrentInterfaceChanged(self, index):
         widget = self.stackWidget.widget(index)
         self.navigationBar.setCurrentItem(widget.objectName())
-
 
     def showMessageBox(self):
         text_for_about = f"Heya! it's Rohan, the creator of {APP_NAME}. I hope you've enjoyed using this app as much as I enjoyed making it." + "" + "\n" + "\n" \

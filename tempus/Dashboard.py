@@ -3,9 +3,9 @@ import json
 import sqlite3
 
 import requests
-from PyQt6.QtCore import Qt, QDate, QPoint
+from PyQt6.QtCore import Qt, QPoint
 from PyQt6.QtGui import QIcon
-from PyQt6.QtWidgets import QVBoxLayout, QWidget, QDialog, QListWidgetItem, QMenu
+from PyQt6.QtWidgets import QVBoxLayout, QWidget, QDialog, QListWidgetItem
 from bs4 import BeautifulSoup
 from qfluentwidgets import (ScrollArea, ListWidget, RoundMenu, Action, FluentIcon, TitleLabel)
 
@@ -14,7 +14,6 @@ import Widgets
 with open("resources/misc/config.json") as config_file:
     _config = json.load(config_file)
 
-user_name = _config["name"]
 zodiac = _config["zodiac"]
 dob = _config["dob"]
 today = datetime.datetime.today()
@@ -125,12 +124,12 @@ class ReminderToday(QDialog):
         # print(date)
 
         # Fetch reminders for today's date
-        cursor.execute('SELECT id, time, description, status FROM reminders WHERE date = ?', (today_date,))
+        cursor.execute('SELECT id, time, description FROM reminders WHERE date = ?', (today_date,))
         todos = cursor.fetchall()
         # print(f"Found {len(todos)} reminders")
 
-        for todo_id, time, description, status in todos:
-            reminder_item = QListWidgetItem(f"{time} - {description} - {status}")
+        for todo_id, time, description in todos:
+            reminder_item = QListWidgetItem(f"{time} - {description}")
             reminder_item.setData(Qt.ItemDataRole.UserRole, todo_id)  # Store the id in the item
             # print(f"Loaded todo with id: {todo_id}")  # Debug: Print the loaded todo_id
             self.reminders_list.addItem(reminder_item)
@@ -280,7 +279,7 @@ class Dashboard(QWidget):
             days_until = (special_date - today).days
 
             if days_until >= 0:
-                self.addCard_V(QIcon("resources/icons/special.png"),
+                self.addCard_V(QIcon("resources/icons/special_day.png"),
                                f"{days_until}", f"days remaining till {reason}")
 
     def get_number_of_todos_for_spcl_date(self, date_str):
