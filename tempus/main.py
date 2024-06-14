@@ -1,5 +1,6 @@
 # coding:utf-8
 import json
+import sqlite3
 import sys
 
 import pycountry
@@ -204,9 +205,56 @@ class Window(FramelessWindow):
         self.navigationBar = NavigationBar(self)
         self.stackWidget = StackedWidget(self)
 
+        """
+        Database Initiation
+        """
+
+        self.conn1 = sqlite3.connect('resources/misc/todos.db')
+        self.cursor1 = self.conn1.cursor()
+
+        # Create a table to store todos
+        self.cursor1.execute('''
+            CREATE TABLE IF NOT EXISTS todos (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                date TEXT,
+                time TEXT,
+                description TEXT,
+                status TEXT
+            )
+        ''')
+        self.conn1.commit()
+
+        self.conn2 = sqlite3.connect('resources/misc/special_dates.db')
+        self.cursor2 = self.conn2.cursor()
+
+        # Create a table to store todos
+        self.cursor2.execute('''
+            CREATE TABLE IF NOT EXISTS special_dates (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                date TEXT,
+                reason TEXT
+            )
+        ''')
+        self.conn2.commit()
+
+        self.conn3 = sqlite3.connect('resources/misc/reminders.db')
+        self.cursor3 = self.conn3.cursor()
+
+        # Create a table to store todos
+        self.cursor3.execute('''
+            CREATE TABLE IF NOT EXISTS reminders (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                date TEXT,
+                time TEXT,
+                description TEXT
+            )
+        ''')
+        self.conn3.commit()
+
+
         self.homeInterface = None
         self.videoInterface = None
-        self.settingsInterface = None
+        self.statsInterface = None
 
         if _config.get("start") == "True":
             self.start()
@@ -218,7 +266,6 @@ class Window(FramelessWindow):
     def start(self):
         self.homeInterface = Dashboard()
         self.videoInterface = Calendar()
-        # self.settingsInterface = Settings.SettingInterface()
         self.initLayout()
         self.initNavigation()
         self.initWindow()
@@ -275,6 +322,7 @@ class Window(FramelessWindow):
     def onCurrentInterfaceChanged(self, index):
         widget = self.stackWidget.widget(index)
         self.navigationBar.setCurrentItem(widget.objectName())
+
 
     def showMessageBox(self):
         text_for_about = f"Heya! it's Rohan, the creator of {APP_NAME}. I hope you've enjoyed using this app as much as I enjoyed making it." + "" + "\n" + "\n" \

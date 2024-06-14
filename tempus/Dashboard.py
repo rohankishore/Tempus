@@ -7,7 +7,7 @@ from PyQt6.QtCore import Qt, QDate, QPoint
 from PyQt6.QtGui import QIcon
 from PyQt6.QtWidgets import QVBoxLayout, QWidget, QDialog, QListWidgetItem, QMenu
 from bs4 import BeautifulSoup
-from qfluentwidgets import (ScrollArea, ListWidget, RoundMenu, Action, FluentIcon)
+from qfluentwidgets import (ScrollArea, ListWidget, RoundMenu, Action, FluentIcon, TitleLabel)
 
 import Widgets
 
@@ -222,14 +222,17 @@ class Dashboard(QWidget):
             self.addCard_Reminders(QIcon("resources/icons/appointments.png"),
                                    "Reminders for Today", f"There are {count_reminder} Reminder(s) for today")
 
-        #####################################################
+
+        spcl_title = TitleLabel()
+        spcl_title.setAlignment(Qt.AlignmentFlag.AlignVCenter)
+        spcl_title.setText("✨ Special Dates ✨")
+        self.scroll_layout.addWidget(spcl_title, alignment=Qt.AlignmentFlag.AlignVCenter)
 
         self.addCard_V(QIcon("resources/icons/cake.png"),
                        f"{days_rem_till_bday}", "days remaining till birthday")
 
-        #####################################################
-
         self.add_special_date_cards()
+
 
         self.show()
 
