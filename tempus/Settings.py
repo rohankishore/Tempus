@@ -35,6 +35,9 @@ class SettingInterface(QWidget):
         zodiac_layout = QHBoxLayout()
         self.layout.addLayout(zodiac_layout)
 
+        label_layout = QHBoxLayout()
+        self.layout.addLayout(label_layout)
+
         bottom_layout = QHBoxLayout()
         self.layout.addLayout(bottom_layout)
 
@@ -63,8 +66,13 @@ class SettingInterface(QWidget):
         self.zodiac_select.addItems(zodiacs_list)
         self.zodiac_select.setCurrentText(zodiac)
 
+        discl_label = QLabel("<b><i>*Please note that Calendarific API is limited to 500 requests per month. So you may have to"
+                             "change your API keys once in a while.</i></b>")
+        discl_label.setWordWrap(True)
+
         self.submit_button = QPushButton(self)
         self.submit_button.setText("Save Settings")
+        self.submit_button.clicked.connect(self.submit_settings)
         bottom_layout.addWidget(self.submit_button, alignment=Qt.AlignmentFlag.AlignBottom)
 
         dob_layout.addWidget(self.dob_label)
@@ -75,6 +83,7 @@ class SettingInterface(QWidget):
         country_layout.addWidget(self.country_select)
         zodiac_layout.addWidget(zodiac_label)
         zodiac_layout.addWidget(self.zodiac_select)
+        label_layout.addWidget(discl_label)
 
     def fetch_country_codes(self):
         countries = list(pycountry.countries)
@@ -88,9 +97,11 @@ class SettingInterface(QWidget):
         _config["dob"] = self.dob_entry.text()
 
         try:
-            print("Before saving:", _config)  # Debug statement
-            with open("resources/misc/config.json", "w") as config_file:
-                json.dump(_config, config_file)
+            print("Before saving:", _config)
+            with open("resources/misc/config.json", "w") as json_file:
+                json.dump(_config, json_file)
+            #with open("resources/misc/config.json", "w") as config_file:
+            #    json.dump(_config, config_file)
             print("Settings saved successfully")
             print("After saving:", _config)  # Debug statement
         except Exception as e:

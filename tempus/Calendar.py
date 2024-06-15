@@ -482,20 +482,3 @@ class Calendar(QCalendarWidget):
             return data['response']['holidays']
         else:
             return []
-
-
-class CalendarWidget(QWidget):
-    def __init__(self):
-        super().__init__()
-        vbox = QVBoxLayout(self)
-        self.setObjectName("Calendar")
-        self.calendar = Calendar()
-        vbox.addWidget(self.calendar)
-        self.lbl = QLabel(self)
-        date = self.calendar.selectedDate()
-        self.lbl.setText(date.toString())
-        vbox.addWidget(self.lbl)
-        self.setLayout(vbox)
-        self.setGeometry(300, 300, 350, 300)
-        self.setWindowTitle('Tempus')
-        self.show()
