@@ -47,6 +47,10 @@ pip install -r requirements.txt
   
 <br>
 
+## ⚒️ TODO
+1. Google Calendar integration
+2. Highlight dates in calendar which is special (maybe add some animations)
+
 ## 🤝 Show Support  
 
 Hey! First of all, thank you for considering supporting me. You can support me by Buying me a Coffee via Ko-Fi. You can either [Click Here](https://ko-fi.com/rohankishore) or click the button "Buy Me A Coffee" on top of this page or via the GitHub Sponsor button. Thanks a lot :)
