@@ -22,9 +22,9 @@ Tempus is a desktop calendar app with Horoscope, TODO, Reminders, etc made using
 ## 🧩 Interface  
 
 ![onboarding](https://github.com/rohankishore/Tempus/assets/109947257/0f208636-28a6-4e91-a05c-5b7a2de0730d)
-
-
 ![image](https://github.com/rohankishore/Tempus/assets/109947257/7ffdbecd-90da-46dd-8c89-7e8daa9e894b)
+![image](https://github.com/rohankishore/Tempus/assets/109947257/195b555a-70c8-4926-9a43-02f4cfceccff)
+
 
 
 <br>
