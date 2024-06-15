@@ -50,6 +50,7 @@ pip install -r requirements.txt
 ## ⚒️ TODO
 1. Google Calendar integration
 2. Highlight dates in calendar which is special (maybe add some animations)
+3. Data backup and restore
 
 ## 🤝 Show Support  
 
